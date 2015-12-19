@@ -51,8 +51,7 @@ class ChatWebSocketConnection : WebSocketConnection
     protected override void OnTextFrame(string text)
     {
         string response = &quot;Server: &quot; + text;
-        byte[] responseBytes = Encoding.UTF8.GetBytes(response);
-        base.Writer.Write(WebSocketOpCode.TextFrame, responseBytes);
+        base.Writer.WriteText(response);
         Trace.WriteLine(response);
     }
 }</pre>
@@ -294,6 +293,12 @@ public class WebSocketFrameWriter
     {
         Write(opCode, payload, true);
     }
+
+    public void WriteText(string text)
+    {
+        byte[] responseBytes = Encoding.UTF8.GetBytes(text);
+        Write(WebSocketOpCode.TextFrame, responseBytes);
+    }    
 }</pre>
 
 <h2>Points of Interest</h2>
