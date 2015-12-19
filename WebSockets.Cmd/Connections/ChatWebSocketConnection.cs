@@ -21,8 +21,7 @@ namespace WebSockets.Cmd.Connections
         protected override void OnTextFrame(string text)
         {
             string response = "Server: " + text;
-            byte[] responseBytes = Encoding.UTF8.GetBytes(response);
-            base.Writer.Write(WebSocketOpCode.TextFrame, responseBytes);
+            base.Writer.WriteText(response);
             Trace.WriteLine(response);
         }
     }

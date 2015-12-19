@@ -62,5 +62,11 @@ namespace WebSockets.Server.WebSocketProtocol
         {
             Write(opCode, payload, true);
         }
+
+        public void WriteText(string text)
+        {
+            byte[] responseBytes = Encoding.UTF8.GetBytes(text);
+            Write(WebSocketOpCode.TextFrame, responseBytes);
+        }
     }
 }
