@@ -2,10 +2,10 @@
 
 <p>Set <code>WebSockets.Cmd</code> as the startup project</p>
 
-<h2>Licence</h2>
+<h2>License</h2>
 
 The MIT License (MIT)
-See LICENCE.txt
+<br/>See LICENCE.txt
 
 <h2>Introduction</h2>
 
