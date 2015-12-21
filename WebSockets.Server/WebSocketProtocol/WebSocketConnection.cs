@@ -47,7 +47,7 @@ namespace WebSockets.Server.WebSocketProtocol
         protected virtual void OnConnectionClosed(byte[] payload)
         {
             _writer.Write(WebSocketOpCode.ConnectionClose, payload);
-            Trace.WriteLine("Client requested connection close");
+            Trace.TraceInformation("Client requested connection close");
         }
 
         protected virtual void OnTextFrame(string text)
@@ -96,7 +96,7 @@ namespace WebSockets.Server.WebSocketProtocol
                                            + "Sec-WebSocket-Accept: " + setWebSocketAccept);
 
                 HttpHelper.WriteHttpHeader(response, networkStream);
-                Trace.WriteLine("Web Socket handshake sent");
+                Trace.TraceInformation("Web Socket handshake sent");
             }
             catch (WebSocketVersionNotSupportedException ex)
             {
@@ -185,7 +185,7 @@ namespace WebSockets.Server.WebSocketProtocol
             {
                 _isDisposed = true;
                 _writer.Write(WebSocketOpCode.ConnectionClose, new byte[0]);
-                Trace.WriteLine("Server requested connection close");
+                Trace.TraceInformation("Server requested connection close");
             }
         }
     }

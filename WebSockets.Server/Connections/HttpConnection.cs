@@ -15,19 +15,39 @@ namespace WebSockets.Server.Connections
     {
         private readonly NetworkStream _networkStream;
         private readonly string _path;
-        
+        private readonly string _webRoot;
 
-        public HttpConnection(NetworkStream networkStream, string path)
+        public HttpConnection(NetworkStream networkStream, string path, string webRoot)
         {
             _networkStream = networkStream;
             _path = path;
+            _webRoot = webRoot;
+        }
+
+        private static bool IsDirectory(string file)
+        {
+            if (Directory.Exists(file))
+            {
+                //detect whether its a directory or file
+                FileAttributes attr = File.GetAttributes(file);
+                return ((attr & FileAttributes.Directory) == FileAttributes.Directory);
+            }
+
+            return false;
         }
 
         public void Respond()
         {
             string file = GetSafePath(_path);
+
+            // default to index.html is path is supplied
+            if (IsDirectory(file))
+            {
+                file += "index.html";
+            }
+
             FileInfo fi = new FileInfo(file);
-            
+
             if (fi.Exists)
             {
                 string ext = fi.Extension.ToLower();
@@ -37,7 +57,7 @@ namespace WebSockets.Server.Connections
                     Byte[] bytes = File.ReadAllBytes(fi.FullName);
                     RespondSuccess(contentType, bytes.Length);
                     _networkStream.Write(bytes, 0, bytes.Length);
-                    Trace.WriteLine("Served file: " + file);
+                    Trace.TraceInformation("Served file: " + file);
                 }
                 else
                 {
@@ -50,17 +70,12 @@ namespace WebSockets.Server.Connections
             }
         }
 
-        private static string GetBasePath()
-        {
-            return Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase).Replace(@"file:\", string.Empty);
-        }
-
         /// <summary>
         /// I am not convinced that this function is indeed safe from hacking file path tricks
         /// </summary>
         /// <param name="path">The relative path</param>
         /// <returns>The file system path</returns>
-        private static string GetSafePath(string path)
+        private string GetSafePath(string path)
         {
             path = path.Trim().Replace("/","\\");
             if (path.Contains("..") || !path.StartsWith("\\") || path.Contains(":"))
@@ -68,20 +83,20 @@ namespace WebSockets.Server.Connections
                 return string.Empty;
             }
 
-            string file = GetBasePath() + path;
+            string file = _webRoot + path;
             return file;
         }
 
         public void RespondMimeTypeFailure(string file)
         {
             HttpHelper.WriteHttpHeader("415 Unsupported Media Type", _networkStream);
-            Trace.WriteLine("File extension not found in MIME types: " + file);
+            Trace.TraceWarning("File extension not found MimeTypes.config: " + file);
         }
 
         public void RespondNotFoundFailure(string file)
         {
             HttpHelper.WriteHttpHeader("HTTP/1.1 404 Not Found", _networkStream);
-            Trace.WriteLine("File not found: " + file);
+            Trace.TraceInformation("File not found: " + file);
         }
 
         public void RespondSuccess(string contentType, int contentLength)

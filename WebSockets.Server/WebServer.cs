@@ -39,7 +39,7 @@ namespace WebSockets.Server
                 IPAddress localAddress = IPAddress.Any;
                 _listener = new TcpListener(localAddress, port);
                 _listener.Start();
-                Trace.WriteLine("Server started listening on port " + port);
+                Trace.TraceInformation("Server started listening on port " + port);
                 StartAccept();
             }
             catch (SocketException ex)
@@ -58,7 +58,7 @@ namespace WebSockets.Server
             _listener.Start();
             StartAccept();
             int port = ((IPEndPoint) _listener.LocalEndpoint).Port;
-            Trace.WriteLine("Server started listening on port " + port);
+            Trace.TraceInformation("Server started listening on port " + port);
             return port;
         }
 
@@ -111,7 +111,7 @@ namespace WebSockets.Server
                 {
                     // we are ready to listen for more connections (on another thread)
                     StartAccept();
-                    Trace.WriteLine("Connection opened");
+                    Trace.TraceInformation("Connection opened");
                     
                     using (NetworkStream networkStream = tcpClient.GetStream())
                     {
@@ -142,7 +142,7 @@ namespace WebSockets.Server
                         }
                     }
 
-                    Trace.WriteLine("Connection closed");
+                    Trace.TraceInformation("Connection closed");
                 }
             }
             catch (ObjectDisposedException)
@@ -193,7 +193,7 @@ namespace WebSockets.Server
 
                 CloseAllConnections();
                 _isDisposed = true;
-                Trace.WriteLine("Web Server disposed");
+                Trace.TraceInformation("Web Server disposed");
             }
         }
     }

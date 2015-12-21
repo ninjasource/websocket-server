@@ -22,7 +22,7 @@ namespace WebSockets.Cmd.Connections
         {
             string response = "Server: " + text;
             base.Writer.WriteText(response);
-            Trace.WriteLine(response);
+            Trace.TraceInformation(response);
         }
     }
 }

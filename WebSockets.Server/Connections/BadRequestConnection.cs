@@ -24,7 +24,7 @@ namespace WebSockets.Server.Connections
 
             // limit what we log. Headers can be up to 16K in size
             string header = _header.Length > 255 ? _header.Substring(0,255) + "..." : _header;
-            Trace.WriteLine("Bad request: '" + header + "'");
+            Trace.TraceInformation("Bad request: '" + header + "'");
         }
 
         public void Dispose()
