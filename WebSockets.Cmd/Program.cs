@@ -6,6 +6,7 @@ using System.Net;
 using WebSockets.Server;
 using WebSockets.Cmd.Connections;
 using System.Diagnostics;
+using WebSockets.Cmd.Properties;
 
 namespace WebSockets.Cmd
 {
@@ -16,11 +17,11 @@ namespace WebSockets.Cmd
             try
             {
                 // used to decide what to do with incomming connections
-                ConnectionFactory connectionFactory = new ConnectionFactory();
+                ConnectionFactory connectionFactory = new ConnectionFactory(Settings.Default.WebRoot);
 
                 using (WebServer server = new WebServer(connectionFactory))
                 {
-                    server.Listen(80);
+                    server.Listen(Settings.Default.Port);
                     Console.ReadKey();
                 }
             }

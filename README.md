@@ -2,6 +2,11 @@
 
 <p>Set <code>WebSockets.Cmd</code> as the startup project</p>
 
+<h2>Licence</h2>
+
+The MIT License (MIT)
+See LICENCE.txt
+
 <h2>Introduction</h2>
 
 <p>A lot of the Web Socket examples out there are for old Web Socket versions and included complicated code (and external libraries) for fall back communication. All modern browsers that anyone cares about (including safari on an iphone) support at least <strong>version 13 of the Web Socket protocol </strong>so I&#39;d rather not complicate things. This is a bare bones implementation of the web socket protocol in C# with no external libraries involved. You can connect using standard HTML5 JavaScript.</p>
