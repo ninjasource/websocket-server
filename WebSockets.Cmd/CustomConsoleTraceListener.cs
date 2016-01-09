@@ -15,7 +15,8 @@ namespace WebSockets.Cmd
 
             // write the localised date and time but include the time zone in brackets (good for combining logs from different timezones)
             TimeSpan utcOffset = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now);
-            string utcHourOffset = utcOffset.TotalHours == 0 ? string.Empty : string.Format(" ({0}{1:hh})", ((utcOffset < TimeSpan.Zero) ? "-" : "+"), utcOffset);
+            string plusOrMinus = (utcOffset < TimeSpan.Zero) ? "-" : "+";
+            string utcHourOffset = utcOffset.TotalHours == 0 ? string.Empty : string.Format(" ({0}{1:hh})", plusOrMinus, utcOffset);
             string dateWithOffset = string.Format(@"{0:yyyy/MM/dd HH:mm:ss.fff}{1}", DateTime.Now, utcHourOffset);
 
             // display the threadid

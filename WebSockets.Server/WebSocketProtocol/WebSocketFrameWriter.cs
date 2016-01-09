@@ -43,13 +43,13 @@ namespace WebSockets.Server.WebSocketProtocol
                 {
                     byte byte2 = 126;
                     memoryStream.WriteByte(byte2);
-                    BinaryReaderWriter.WriteUShort((ushort)payload.Length, memoryStream);
+                    BinaryReaderWriter.WriteUShort((ushort)payload.Length, memoryStream, false);
                 }
                 else
                 {
                     byte byte2 = 127;
                     memoryStream.WriteByte(byte2);
-                    BinaryReaderWriter.WriteULong((ulong)payload.Length, memoryStream);
+                    BinaryReaderWriter.WriteULong((ulong)payload.Length, memoryStream, false);
                 }
 
                 memoryStream.Write(payload, 0, payload.Length);

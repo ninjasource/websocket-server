@@ -68,11 +68,13 @@ namespace WebSockets.Server.WebSocketProtocol
             if (len == 126)
             {
                 byte[] lenBuffer = BinaryReaderWriter.ReadExactly(2, stream);
+                Array.Reverse(lenBuffer); // big endian
                 len = (uint)BitConverter.ToUInt16(lenBuffer, 0);
             }
             else if (len == 127)
             {
                 byte[] lenBuffer = BinaryReaderWriter.ReadExactly(8, stream);
+                Array.Reverse(lenBuffer); // big endian
                 len = (uint)BitConverter.ToUInt64(lenBuffer, 0);
                 const uint maxLen = 2147483648; // 2GB
 

@@ -31,15 +31,25 @@ namespace WebSockets.Server.WebSocketProtocol
             return buffer;
         }
 
-        public static void WriteULong(ulong value, Stream stream)
+        public static void WriteULong(ulong value, Stream stream, bool isLittleEndian)
         {
             byte[] buffer = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian && ! isLittleEndian)
+            {
+                Array.Reverse(buffer);
+            }
+
             stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static void WriteUShort(ushort value, Stream stream)
+        public static void WriteUShort(ushort value, Stream stream, bool isLittleEndian)
         {
             byte[] buffer = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian && !isLittleEndian)
+            {
+                Array.Reverse(buffer);
+            }
+
             stream.Write(buffer, 0, buffer.Length);
         }
     }

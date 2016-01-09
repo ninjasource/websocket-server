@@ -103,6 +103,12 @@ namespace WebSockets.Server
         {
             try
             {
+                if (_isDisposed)
+                {
+                    Trace.TraceWarning("Web Server is Disposed, new connection ignored");
+                    return;
+                }
+
                 // this worker thread stays alive until either of the following happens:
                 // Client sends a close conection request OR
                 // An unhandled exception is thrown OR
@@ -127,7 +133,7 @@ namespace WebSockets.Server
                                     _openConnections.Add(connection);
                                 }
 
-                                // respong to the http request.
+                                // respond to the http request.
                                 // Take a look at the WebSocketConnection or HttpConnection classes
                                 connection.Respond();
                             }
@@ -157,22 +163,25 @@ namespace WebSockets.Server
 
         private void CloseAllConnections()
         {
+            IDisposable[] openConnections;
+
             lock (_openConnections)
             {
-                // safely attempt to close each connection
-                foreach (IDisposable openConnection in _openConnections)
-                {
-                    try
-                    {
-                        openConnection.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError(ex.ToString());
-                    }
-                }
-
+                openConnections = _openConnections.ToArray();
                 _openConnections.Clear();
+            }
+
+            // safely attempt to close each connection
+            foreach (IDisposable openConnection in openConnections)
+            {
+                try
+                {
+                    openConnection.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(ex.ToString());
+                }
             }
         }
 
@@ -180,6 +189,8 @@ namespace WebSockets.Server
         {
             if (!_isDisposed)
             {
+                _isDisposed = true;
+
                 // safely attempt to shut down the listener
                 try
                 {
@@ -192,7 +203,6 @@ namespace WebSockets.Server
                 }
 
                 CloseAllConnections();
-                _isDisposed = true;
                 Trace.TraceInformation("Web Server disposed");
             }
         }

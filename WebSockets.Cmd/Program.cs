@@ -16,12 +16,15 @@ namespace WebSockets.Cmd
         {
             try
             {
-                // used to decide what to do with incomming connections
-                ConnectionFactory connectionFactory = new ConnectionFactory(Settings.Default.WebRoot);
+                string webRoot = Settings.Default.WebRoot;
+                int port = Settings.Default.Port;
+
+                // used to decide what to do with incoming connections
+                ConnectionFactory connectionFactory = new ConnectionFactory(webRoot);
 
                 using (WebServer server = new WebServer(connectionFactory))
                 {
-                    server.Listen(Settings.Default.Port);
+                    server.Listen(port);
                     Console.ReadKey();
                 }
             }
