@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets.Server", "WebSockets.Server\WebSockets.Server.csproj", "{D2DBCC1D-CEF2-400B-A886-7E0D13A25F9C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets", "WebSockets\WebSockets.csproj", "{D2DBCC1D-CEF2-400B-A886-7E0D13A25F9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSockets.Cmd", "WebSockets.Cmd\WebSockets.Cmd.csproj", "{8B0F4F0F-C3EB-4891-A612-84BED9EC3D71}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketsCmd", "WebSocketsCmd\WebSocketsCmd.csproj", "{8B0F4F0F-C3EB-4891-A612-84BED9EC3D71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
