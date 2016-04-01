@@ -314,5 +314,7 @@ I suggest that you use transport layer security if you want this to work across 
 <h2>History</h2>
 
 <ul>
-	<li>Version 1.0 WebSocket</li>
+	<li>Version 1.01 WebSocket</li>
+	<li>Version 1.02 Fixed endianness bug with length field</li>
+	<li>Version 1.03 Major refactor and added support for c# Client</li>
 </ul>
