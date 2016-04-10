@@ -14,15 +14,15 @@ namespace WebSockets.Server.Http
 {
     public class HttpService : IService
     {
-        private readonly NetworkStream _networkStream;
+        private readonly Stream _stream;
         private readonly string _path;
         private readonly string _webRoot;
         private readonly IWebSocketLogger _logger;
         private readonly MimeTypes _mimeTypes;
 
-        public HttpService(NetworkStream networkStream, string path, string webRoot, IWebSocketLogger logger)
+        public HttpService(Stream stream, string path, string webRoot, IWebSocketLogger logger)
         {
-            _networkStream = networkStream;
+            _stream = stream;
             _path = path;
             _webRoot = webRoot;
             _logger = logger;
@@ -63,7 +63,7 @@ namespace WebSockets.Server.Http
                 {
                     Byte[] bytes = File.ReadAllBytes(fi.FullName);
                     RespondSuccess(contentType, bytes.Length);
-                    _networkStream.Write(bytes, 0, bytes.Length);
+                    _stream.Write(bytes, 0, bytes.Length);
                     _logger.Information(this.GetType(), "Served file: {0}", file);
                 }
                 else
@@ -96,13 +96,13 @@ namespace WebSockets.Server.Http
 
         public void RespondMimeTypeFailure(string file)
         {
-            HttpHelper.WriteHttpHeader("415 Unsupported Media Type", _networkStream);
+            HttpHelper.WriteHttpHeader("415 Unsupported Media Type", _stream);
             _logger.Warning(this.GetType(), "File extension not found MimeTypes.config: {0}", file);
         }
 
         public void RespondNotFoundFailure(string file)
         {
-            HttpHelper.WriteHttpHeader("HTTP/1.1 404 Not Found", _networkStream);
+            HttpHelper.WriteHttpHeader("HTTP/1.1 404 Not Found", _stream);
             _logger.Information(this.GetType(), "File not found: {0}", file);
         }
 
@@ -112,7 +112,7 @@ namespace WebSockets.Server.Http
                               "Content-Type: " + contentType + Environment.NewLine +
                               "Content-Length: " + contentLength + Environment.NewLine +
                               "Connection: close";
-            HttpHelper.WriteHttpHeader(response, _networkStream);
+            HttpHelper.WriteHttpHeader(response, _stream);
         }
 
         public void Dispose()

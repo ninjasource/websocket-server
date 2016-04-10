@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using WebSockets.Server.WebSocket;
 using WebSockets.Common;
+using System.IO;
 
 namespace WebSocketsCmd.Server
 {
@@ -13,8 +14,8 @@ namespace WebSocketsCmd.Server
     {
         private readonly IWebSocketLogger _logger;
 
-        public ChatWebSocketService(NetworkStream networkStream, TcpClient tcpClient, string header, IWebSocketLogger logger)
-            : base(networkStream, tcpClient, header, true, logger)
+        public ChatWebSocketService(Stream stream, TcpClient tcpClient, string header, IWebSocketLogger logger)
+            : base(stream, tcpClient, header, true, logger)
         {
             _logger = logger;
         }

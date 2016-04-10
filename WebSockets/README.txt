@@ -38,10 +38,15 @@ If you are not interested in the inner workings of Web Sockets and just want to 
 
 Problems with Proxy Servers:
 Proxy servers which have not been configured to support Web sockets will not work well with them. 
-I suggest that you use transport layer security if you want this to work across the wider internet especially from within a corporation
+I suggest that you use transport layer security (SSL) if you want this to work across the wider internet especially from within a corporation
 
 Sub Folders:
 You can assign different web socket handlers depending on the folder attribute of the first line of the http request
 eg: 
 GET /chat HTTP/1.1
 This folder has been setup to use the ChatWebSocketService class
+
+Change Log:
+
+10 Apr 2016: SSL support
+02 Apr 2016: c# Client

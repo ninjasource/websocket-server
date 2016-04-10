@@ -17,16 +17,16 @@ namespace WebSockets.Server.WebSocket
 {
     public class WebSocketService : WebSocketBase, IService
     {
-        private readonly NetworkStream _networkStream;
+        private readonly Stream _stream;
         private readonly string _header;
         private readonly IWebSocketLogger _logger;
         private readonly TcpClient _tcpClient;
         private bool _isDisposed = false;
 
-        public WebSocketService(NetworkStream networkStream, TcpClient tcpClient, string header, bool noDelay, IWebSocketLogger logger)
+        public WebSocketService(Stream stream, TcpClient tcpClient, string header, bool noDelay, IWebSocketLogger logger)
             : base(logger)
         {
-            _networkStream = networkStream;
+            _stream = stream;
             _header = header;
             _logger = logger;
             _tcpClient = tcpClient;
@@ -38,10 +38,10 @@ namespace WebSockets.Server.WebSocket
 
         public void Respond()
         {
-            base.OpenBlocking(_networkStream, _tcpClient.Client);
+            base.OpenBlocking(_stream, _tcpClient.Client);
         }
 
-        protected override void PerformHandshake(NetworkStream networkStream)
+        protected override void PerformHandshake(Stream stream)
         {
             string header = _header;
 
@@ -65,18 +65,18 @@ namespace WebSockets.Server.WebSocket
                                    + "Upgrade: websocket" + Environment.NewLine
                                    + "Sec-WebSocket-Accept: " + setWebSocketAccept);
 
-                HttpHelper.WriteHttpHeader(response, networkStream);
+                HttpHelper.WriteHttpHeader(response, stream);
                 _logger.Information(this.GetType(), "Web Socket handshake sent");
             }
             catch (WebSocketVersionNotSupportedException ex)
             {
                 string response = "HTTP/1.1 426 Upgrade Required" + Environment.NewLine + "Sec-WebSocket-Version: 13";
-                HttpHelper.WriteHttpHeader(response, networkStream);
+                HttpHelper.WriteHttpHeader(response, stream);
                 throw;
             }
             catch (Exception ex)
             {
-                HttpHelper.WriteHttpHeader("HTTP/1.1 400 Bad Request", networkStream);
+                HttpHelper.WriteHttpHeader("HTTP/1.1 400 Bad Request", stream);
                 throw;
             }
         }
@@ -90,7 +90,7 @@ namespace WebSockets.Server.WebSocket
         public virtual void Dispose()
         {
             // send special web socket close message. Don't close the network stream, it will be disposed later
-            if (_networkStream.CanWrite && !_isDisposed)
+            if (_stream.CanWrite && !_isDisposed)
             {
                 using (MemoryStream stream = new MemoryStream())
                 {

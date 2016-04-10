@@ -50,15 +50,15 @@ namespace WebSocketsCmd.Server
                     // you can support different kinds of web socket connections using a different path
                     if (connectionDetails.Path == "/chat")
                     {
-                        return new ChatWebSocketService(connectionDetails.NetworkStream, connectionDetails.TcpClient, connectionDetails.Header, _logger);
+                        return new ChatWebSocketService(connectionDetails.Stream, connectionDetails.TcpClient, connectionDetails.Header, _logger);
                     }
                     break;
                 case ConnectionType.Http:
                     // this path actually refers to the reletive location of some html file or image
-                    return new HttpService(connectionDetails.NetworkStream, connectionDetails.Path, _webRoot, _logger);
+                    return new HttpService(connectionDetails.Stream, connectionDetails.Path, _webRoot, _logger);
             }
 
-            return new BadRequestService(connectionDetails.NetworkStream, connectionDetails.Header, _logger);
+            return new BadRequestService(connectionDetails.Stream, connectionDetails.Header, _logger);
         }
     }
 }

@@ -14,6 +14,7 @@ using System.Threading;
 using WebSockets;
 using WebSockets.Events;
 using WebSocketsCmd.Server;
+using System.IO;
 
 namespace WebSocketsCmd
 {
@@ -60,8 +61,14 @@ namespace WebSocketsCmd
 
             try
             {
-                string webRoot = Settings.Default.WebRoot;
                 int port = Settings.Default.Port;
+                string webRoot = Settings.Default.WebRoot;
+                if (!Directory.Exists(webRoot))
+                {
+                    string baseFolder = AppDomain.CurrentDomain.BaseDirectory;
+                    logger.Warning(typeof(Program), "Webroot folder {0} not found. Using application base directory: {1}", webRoot, baseFolder);
+                    webRoot = baseFolder;
+                }
 
                 // used to decide what to do with incoming connections
                 ServiceFactory serviceFactory = new ServiceFactory(webRoot, logger);
@@ -77,7 +84,7 @@ namespace WebSocketsCmd
             }
             catch (Exception ex)
             {
-                logger.Error(null, ex);
+                logger.Error(typeof(Program), ex);
                 Console.ReadKey();
             }
         }

@@ -15,6 +15,9 @@ using WebSockets.Exceptions;
 using WebSockets.Server;
 using WebSockets.Server.Http;
 using WebSockets.Common;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WebSockets
 {
@@ -24,6 +27,7 @@ namespace WebSockets
         private readonly List<IDisposable> _openConnections;
         private readonly IServiceFactory _serviceFactory;
         private readonly IWebSocketLogger _logger;
+        private X509Certificate2 _sslCertificate;
         private TcpListener _listener;
         private bool _isDisposed = false;
 
@@ -34,13 +38,11 @@ namespace WebSockets
             _openConnections = new List<IDisposable>();
         }
 
-        /// <summary>
-        /// Listens on the port specified
-        /// </summary>
-        public void Listen(int port)
+        public void Listen(int port, X509Certificate2 sslCertificate)
         {
             try
             {
+                _sslCertificate = sslCertificate;
                 IPAddress localAddress = IPAddress.Any;
                 _listener = new TcpListener(localAddress, port);
                 _listener.Start();
@@ -52,6 +54,14 @@ namespace WebSockets
                 string message = string.Format("Error listening on port {0}. Make sure IIS or another application is not running and consuming your port.", port);
                 throw new ServerListenerSocketException(message, ex);
             }
+        }
+
+        /// <summary>
+        /// Listens on the port specified
+        /// </summary>
+        public void Listen(int port)
+        {
+            Listen(port, null);
         }
 
         /// <summary>
@@ -74,10 +84,10 @@ namespace WebSockets
             _listener.BeginAcceptTcpClient(new AsyncCallback(HandleAsyncConnection), null);
         }
 
-        private static ConnectionDetails GetConnectionDetails(NetworkStream networkStream, TcpClient tcpClient)
+        private static ConnectionDetails GetConnectionDetails(Stream stream, TcpClient tcpClient)
         {
             // read the header and check that it is a GET request
-            string header = HttpHelper.ReadHttpHeader(networkStream);
+            string header = HttpHelper.ReadHttpHeader(stream);
             Regex getRegex = new Regex(@"^GET(.*)HTTP\/1\.1", RegexOptions.IgnoreCase);
 
             Match getRegexMatch = getRegex.Match(header);
@@ -92,16 +102,42 @@ namespace WebSockets
 
                 if (webSocketUpgradeRegexMatch.Success)
                 {
-                    return new ConnectionDetails(networkStream, tcpClient, path, ConnectionType.WebSocket, header);
+                    return new ConnectionDetails(stream, tcpClient, path, ConnectionType.WebSocket, header);
                 }
                 else
                 {
-                    return new ConnectionDetails(networkStream, tcpClient, path, ConnectionType.Http, header);
+                    return new ConnectionDetails(stream, tcpClient, path, ConnectionType.Http, header);
                 }
             }
             else
             {
-                return new ConnectionDetails(networkStream, tcpClient, string.Empty, ConnectionType.Unknown, header); 
+                return new ConnectionDetails(stream, tcpClient, string.Empty, ConnectionType.Unknown, header); 
+            }
+        }
+
+        private Stream GetStream(TcpClient tcpClient)
+        {
+            Stream stream = tcpClient.GetStream();
+
+            // we have no ssl certificate
+            if (_sslCertificate == null)
+            {
+                _logger.Information(this.GetType(), "Connection not secure");
+                return stream;
+            }
+
+            try
+            {
+                SslStream sslStream = new SslStream(stream, false);
+                _logger.Information(this.GetType(), "Attempting to secure connection...");
+                sslStream.AuthenticateAsServer(_sslCertificate, false, SslProtocols.Tls, true);
+                _logger.Information(this.GetType(), "Connection successfully secured");
+                return sslStream;
+            }
+            catch (AuthenticationException e)
+            {
+                // TODO: send 401 Unauthorized
+                throw;
             }
         }
 
@@ -124,10 +160,11 @@ namespace WebSockets
                     StartAccept();
                     _logger.Information(this.GetType(), "Server: Connection opened");
 
-                    NetworkStream networkStream = tcpClient.GetStream();
+                    // get a secure or insecure stream
+                    Stream stream = GetStream(tcpClient);
 
                     // extract the connection details and use those details to build a connection
-                    ConnectionDetails connectionDetails = GetConnectionDetails(networkStream, tcpClient);
+                    ConnectionDetails connectionDetails = GetConnectionDetails(stream, tcpClient);
                     using (IService service = _serviceFactory.CreateInstance(connectionDetails))
                     {
                         try
@@ -198,8 +235,15 @@ namespace WebSockets
                 // safely attempt to shut down the listener
                 try
                 {
-                    _listener.Server.Close();
-                    _listener.Stop();
+                    if (_listener != null)
+                    {
+                        if (_listener.Server != null)
+                        {
+                            _listener.Server.Close();
+                        }
+
+                        _listener.Stop();
+                    }
                 }
                 catch (Exception ex)
                 {

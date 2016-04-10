@@ -13,7 +13,7 @@ namespace WebSockets.Server.Http
 {
     public class HttpHelper
     {
-        public static string ReadHttpHeader(NetworkStream networkStream)
+        public static string ReadHttpHeader(Stream stream)
         {
             int length = 1024*16; // 16KB buffer more than enough for http header
             byte[] buffer = new byte[length];
@@ -26,7 +26,7 @@ namespace WebSockets.Server.Http
                     throw new EntityTooLargeException("Http header message too large to fit in buffer (16KB)");
                 }
 
-                bytesRead = networkStream.Read(buffer, offset, length - offset);
+                bytesRead = stream.Read(buffer, offset, length - offset);
                 offset += bytesRead;
                 string header = Encoding.UTF8.GetString(buffer, 0, offset);
 

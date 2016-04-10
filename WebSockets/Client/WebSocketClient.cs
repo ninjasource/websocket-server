@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,6 +16,7 @@ using WebSockets.Server.Http;
 using System.Threading;
 using WebSockets.Events;
 using System.Threading.Tasks;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WebSockets.Client
 {
@@ -23,15 +25,47 @@ namespace WebSockets.Client
         private readonly bool _noDelay;
         private readonly IWebSocketLogger _logger;
         private TcpClient _tcpClient;
-        private NetworkStream _networkStream;
+        private Stream _stream;
         private Uri _uri;
         private ManualResetEvent _conectionCloseWait;
 
-        public WebSocketClient(bool noDelay, IWebSocketLogger logger) : base(logger)
+        public WebSocketClient(bool noDelay, IWebSocketLogger logger)
+            : base(logger)
         {
             _noDelay = noDelay;
             _logger = logger;
             _conectionCloseWait = new ManualResetEvent(false);
+        }
+
+        // The following method is invoked by the RemoteCertificateValidationDelegate.
+        public static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            if (sslPolicyErrors == SslPolicyErrors.None)
+            {
+                return true;
+            }
+
+            Console.WriteLine("Certificate error: {0}", sslPolicyErrors);
+
+            // Do not allow this client to communicate with unauthenticated servers.
+            return false;
+        }
+
+        private Stream GetStream(TcpClient tcpClient, bool isSecure)
+        {
+            if (isSecure)
+            {
+                SslStream sslStream = new SslStream(tcpClient.GetStream(), false, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _logger.Information(this.GetType(), "Attempting to secure connection...");
+                sslStream.AuthenticateAsClient("clusteredanalytics.com");
+                _logger.Information(this.GetType(), "Connection successfully secured.");
+                return sslStream;
+            }
+            else
+            {
+                _logger.Information(this.GetType(), "Connection not secure");
+                return tcpClient.GetStream();
+            }
         }
 
         public virtual void OpenBlocking(Uri uri)
@@ -53,44 +87,46 @@ namespace WebSockets.Client
                     _tcpClient.Connect(host, port);
                 }
 
-                _networkStream = _tcpClient.GetStream();
+                bool isSecure = port == 443;
+                _stream = GetStream(_tcpClient, isSecure);
+
                 _uri = uri;
                 _isOpen = true;
-                base.OpenBlocking(_networkStream, _tcpClient.Client);
+                base.OpenBlocking(_stream, _tcpClient.Client);
                 _isOpen = false;
             }
         }
 
-        protected override void PerformHandshake(NetworkStream networkStream)
+        protected override void PerformHandshake(Stream stream)
         {
-Uri uri = _uri;
-WebSocketFrameReader reader = new WebSocketFrameReader();
-Random rand = new Random();
-byte[] keyAsBytes = new byte[16];
-rand.NextBytes(keyAsBytes);
-string secWebSocketKey = Convert.ToBase64String(keyAsBytes);
+            Uri uri = _uri;
+            WebSocketFrameReader reader = new WebSocketFrameReader();
+            Random rand = new Random();
+            byte[] keyAsBytes = new byte[16];
+            rand.NextBytes(keyAsBytes);
+            string secWebSocketKey = Convert.ToBase64String(keyAsBytes);
 
-string handshakeHttpRequestTemplate = @"GET {0} HTTP/1.1{4}" +
-                                        "Host: {1}:{2}{4}" +
-                                        "Upgrade: websocket{4}" +
-                                        "Connection: Upgrade{4}" +
-                                        "Sec-WebSocket-Key: {3}{4}" +
-                                        "Sec-WebSocket-Version: 13{4}{4}";
+            string handshakeHttpRequestTemplate = @"GET {0} HTTP/1.1{4}" +
+                                                  "Host: {1}:{2}{4}" +
+                                                  "Upgrade: websocket{4}" +
+                                                  "Connection: Upgrade{4}" +
+                                                  "Sec-WebSocket-Key: {3}{4}" +
+                                                  "Sec-WebSocket-Version: 13{4}{4}";
 
-string handshakeHttpRequest = string.Format(handshakeHttpRequestTemplate, uri.PathAndQuery, uri.Host, uri.Port, secWebSocketKey, Environment.NewLine);
-byte[] httpRequest = Encoding.UTF8.GetBytes(handshakeHttpRequest);
-networkStream.Write(httpRequest, 0, httpRequest.Length);
-_logger.Information(this.GetType(), "Handshake sent. Waiting for response.");
+            string handshakeHttpRequest = string.Format(handshakeHttpRequestTemplate, uri.PathAndQuery, uri.Host, uri.Port, secWebSocketKey, Environment.NewLine);
+            byte[] httpRequest = Encoding.UTF8.GetBytes(handshakeHttpRequest);
+            stream.Write(httpRequest, 0, httpRequest.Length);
+            _logger.Information(this.GetType(), "Handshake sent. Waiting for response.");
 
-// make sure we escape the accept string which could contain special regex characters
-string regexPattern = "Sec-WebSocket-Accept: (.*)";
-Regex regex = new Regex(regexPattern);
+            // make sure we escape the accept string which could contain special regex characters
+            string regexPattern = "Sec-WebSocket-Accept: (.*)";
+            Regex regex = new Regex(regexPattern);
 
             string response = string.Empty;
 
             try
             {
-                response = HttpHelper.ReadHttpHeader(networkStream);
+                response = HttpHelper.ReadHttpHeader(stream);
             }
             catch (Exception ex)
             {
@@ -117,7 +153,7 @@ Regex regex = new Regex(regexPattern);
                 using (MemoryStream stream = new MemoryStream())
                 {
                     // set the close reason to GoingAway
-                    BinaryReaderWriter.WriteUShort((ushort)WebSocketCloseCode.GoingAway, stream, false);
+                    BinaryReaderWriter.WriteUShort((ushort) WebSocketCloseCode.GoingAway, stream, false);
 
                     // send close message to server to begin the close handshake
                     Send(WebSocketOpCode.ConnectionClose, stream.ToArray());
@@ -142,7 +178,7 @@ Regex regex = new Regex(regexPattern);
 
                 // wait for data to be sent before we close the stream and client
                 _tcpClient.Client.Shutdown(SocketShutdown.Both);
-                _networkStream.Close();
+                _stream.Close();
                 _tcpClient.Close();
             }
 

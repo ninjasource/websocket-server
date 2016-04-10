@@ -14,7 +14,7 @@ namespace WebSockets.Common
     {
         private readonly IWebSocketLogger _logger;
         private readonly object _sendLocker;
-        private NetworkStream _networkStream;
+        private Stream _stream;
         private WebSocketFrameWriter _writer;
         private WebSocketOpCode _multiFrameOpcode;
         private Socket _socket;
@@ -36,12 +36,12 @@ namespace WebSockets.Common
             _isOpen = false;
         }
 
-        protected void OpenBlocking(NetworkStream networkStream, Socket socket)
+        protected void OpenBlocking(Stream stream, Socket socket)
         {
             _socket = socket;
-            _networkStream = networkStream;
-            _writer = new WebSocketFrameWriter(networkStream);
-            PerformHandshake(networkStream);
+            _stream = stream;
+            _writer = new WebSocketFrameWriter(stream);
+            PerformHandshake(stream);
             _isOpen = true;
             MainReadLoop();
         }
@@ -153,7 +153,7 @@ namespace WebSockets.Common
             }
         }
 
-        protected abstract void PerformHandshake(NetworkStream networkStream);
+        protected abstract void PerformHandshake(Stream stream);
 
         /// <summary>
         /// Combines the key supplied by the client with a guid and returns the sha1 hash of the combination
@@ -205,7 +205,7 @@ namespace WebSockets.Common
 
         private void MainReadLoop()
         {
-            NetworkStream networkStream = _networkStream;
+            Stream stream = _stream;
             OnConnectionOpened();
             WebSocketFrameReader reader = new WebSocketFrameReader();
             List<WebSocketFrame> fragmentedFrames = new List<WebSocketFrame>();
@@ -216,7 +216,7 @@ namespace WebSockets.Common
 
                 try
                 {
-                    frame = reader.Read(networkStream, _socket);
+                    frame = reader.Read(stream, _socket);
                     if (frame == null)
                     {
                         return;

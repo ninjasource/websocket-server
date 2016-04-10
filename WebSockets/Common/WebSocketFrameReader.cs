@@ -19,7 +19,7 @@ namespace WebSockets.Common
             _buffer = new byte[1024*64];
         }
 
-        public WebSocketFrame Read(NetworkStream stream, Socket socket)
+        public WebSocketFrame Read(Stream stream, Socket socket)
         {
             byte byte1;
 
