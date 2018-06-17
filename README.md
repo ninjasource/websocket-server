@@ -1,5 +1,6 @@
 <h1>WebSocket Server in c#</h1>
 
+<p>NOTE: This is no longer maintained. See https://github.com/ninjasource/Ninja.WebSockets</p>
 <p>Set <code>WebSockets.Cmd</code> as the startup project</p>
 
 <h2>License</h2>
